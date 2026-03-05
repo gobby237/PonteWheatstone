@@ -73,19 +73,19 @@ if len(x_fit_data) > 1:
              marker='|', markersize=12, linewidth=1.5, zorder=12)
     
     ax.text(x_centro, y_bracket + 10, r'$\pm$ 15 $\Omega$', color='darkred', 
-             ha='center', va='bottom', fontsize=17, fontweight='bold')
+             ha='center', va='bottom', fontsize=19, fontweight='bold')
 
 # Personalizzazione estetica
-ax.set_title("Intervallo di linearità del ponte", fontsize=20, pad=20, fontweight='bold')
-ax.set_xlabel(r"$R_n$ ($\Omega$)", fontsize=18)
-ax.set_ylabel(r"$i$ ($\mu A$)", fontsize=18)
+ax.set_title("Intervallo di linearità del ponte", fontsize=22, pad=20, fontweight='bold')
+ax.set_xlabel(r"$R_n$ ($\Omega$)", fontsize=20)
+ax.set_ylabel(r"$i$ ($\mu A$)", fontsize=20)
 
 # Assi guida centrali
 ax.axhline(0, color='red', linewidth=1.2, linestyle='--', alpha=0.7) 
 ax.axvline(x_centro, color='red', linewidth=1.2, linestyle='--', alpha=0.7, label=f'Centro $R_x$ ({x_centro} $\Omega$)')
 
 # --- CONFIGURAZIONE TICKS IN STILE ROOT ---
-ax.tick_params(axis='both', which='major', direction='in', length=8, width=1.2, labelsize=14, top=True, right=True)
+ax.tick_params(axis='both', which='major', direction='in', length=8, width=1.2, labelsize=16, top=True, right=True)
 ax.tick_params(axis='both', which='minor', direction='in', length=4, width=1.0, top=True, right=True)
 ax.xaxis.set_minor_locator(AutoMinorLocator())
 ax.yaxis.set_minor_locator(AutoMinorLocator())
@@ -100,6 +100,49 @@ if y_lim_min is not None and y_lim_max is not None:
     ax.set_ylim(y_lim_min, y_lim_max)
 
 ax.legend(fontsize=14, frameon=True, shadow=True, loc='best')
+
+# --- NASCONDI la prima etichetta dei tick su X e su Y ---
+fig.canvas.draw()  # forza la creazione delle ticklabels
+
+# X: togli la prima etichetta
+xticks = ax.get_xticks()
+xlabels = [lab.get_text() for lab in ax.get_xticklabels()]
+if len(xlabels) > 0:
+    xlabels[0] = ""
+    ax.set_xticks(xticks)
+    ax.set_xticklabels(xlabels)
+
+# Y: togli la prima etichetta
+yticks = ax.get_yticks()
+ylabels = [lab.get_text() for lab in ax.get_yticklabels()]
+if len(ylabels) > 0:
+    ylabels[0] = ""
+    ax.set_yticks(yticks)
+    ax.set_yticklabels(ylabels)
+
+    # --- NASCONDI prima e ultima etichetta dei tick su X e Y ---
+fig.canvas.draw()  # forza la creazione delle ticklabels
+
+def hide_first_last_ticklabels(axis="x"):
+    if axis == "x":
+        ticks = ax.get_xticks()
+        labels = [lab.get_text() for lab in ax.get_xticklabels()]
+        if len(labels) >= 2:
+            labels[0] = ""
+            labels[-1] = ""
+            ax.set_xticks(ticks)
+            ax.set_xticklabels(labels)
+    else:
+        ticks = ax.get_yticks()
+        labels = [lab.get_text() for lab in ax.get_yticklabels()]
+        if len(labels) >= 2:
+            labels[0] = ""
+            labels[-1] = ""
+            ax.set_yticks(ticks)
+            ax.set_yticklabels(labels)
+
+hide_first_last_ticklabels("x")
+hide_first_last_ticklabels("y")
 
 plt.tight_layout()
 plt.show()
