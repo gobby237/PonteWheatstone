@@ -22,33 +22,27 @@
 #include <TSystem.h>
 
 // ===== Costanti per range personalizzato asse X =====
-// Imposta USER_XMIN e USER_XMAX a valori diversi da -1 per forzare un range personalizzato.
-// Se lasci a -1, il range viene calcolato automaticamente dai dati.
-const Double_t USER_XMIN = 1920;  // Minimo asse X
-const Double_t USER_XMAX = 1984;  // Massimo asse X
+const Double_t USER_XMIN = 1920;
+const Double_t USER_XMAX = 1984;
 
 // ===== Costante per massimo asse Y =====
-// Imposta USER_YMAX a valore diverso da -1 per forzare un massimo personalizzato.
-// Se lasci a -1, il massimo viene calcolato automaticamente da ROOT.
-const Double_t USER_YMAX = -1;  // Esempio: 10.0 per fissare il massimo a 10
+const Double_t USER_YMAX = -1;
 
 // ===== Costante per larghezza bin =====
-// Imposta BIN_WIDTH a valore >0 per specificare la larghezza desiderata del bin.
-// Se lasci a -1, usa il numero fisso di bin (30).
-const Double_t BIN_WIDTH = 2;  // Esempio: 2.0 per bin di 2 unità
+const Double_t BIN_WIDTH = -1.0;
 
 // ===== Costanti per dimensioni immagine in pixel =====
 const Int_t IMG_WIDTH  = 500;
 const Int_t IMG_HEIGHT = 600;
 
-void plotDataZoom() {
+void plotDataZoomdir() {
   gSystem->Load("libstdc++");
 
   // ===== 1) Dati =====
   std::vector<Double_t> data = {
-    1954.9, 1953.8, 1952.8, 1952.5, 1951.8,
-    1952.0, 1951.7, 1952.4, 1951.9, 1951.7,
-    1951.7, 1951.4, 1951.4, 1951.4, 1951.4
+    1953.0, 1952.3, 1953.0, 1947.7, 1950.8,
+    1951.7, 1947.7, 1944.7, 1951.6, 1952.5,
+    1947.1, 1940.8, 1950.1, 1948.9, 1953.0
   };
 
   if (data.empty()) {
@@ -68,9 +62,8 @@ void plotDataZoom() {
     stddev = (var > 0) ? sqrt(var) : 0.0;
   }
 
-  // ===== 3) Binning e range =====
-  // Il range dell'istogramma usa USER_XMIN/USER_XMAX se definiti,
-  // altrimenti viene calcolato automaticamente dai dati.
+  // ===== 3) Binning e range "allargato" =====
+  Int_t nbins = 30;
   const Double_t pad_frac = 0.20;
   const Double_t n_std = 4.0;
 
@@ -80,34 +73,37 @@ void plotDataZoom() {
 
   Double_t xmin_data = minv - pad;
   Double_t xmax_data = maxv + pad;
-  Double_t xmin_std  = mean - n_std * stddev;
-  Double_t xmax_std  = mean + n_std * stddev;
+  Double_t xmin_std = mean - n_std * stddev;
+  Double_t xmax_std = mean + n_std * stddev;
 
-  Double_t xmin = (USER_XMIN != -1) ? USER_XMIN : std::min(xmin_data, xmin_std);
-  Double_t xmax = (USER_XMAX != -1) ? USER_XMAX : std::max(xmax_data, xmax_std);
+  Double_t xmin = std::min(xmin_data, xmin_std);
+  Double_t xmax = std::max(xmax_data, xmax_std);
 
-  if (stddev == 0.0 && USER_XMIN == -1) {
+  if (stddev == 0.0) {
     xmin = minv - pad;
     xmax = maxv + pad;
   }
 
-  // Calcolo numero di bin in base a BIN_WIDTH oppure numero fisso
-  Int_t nbins = 30;
-  if (BIN_WIDTH > 0) {
-    nbins = (Int_t)TMath::Ceil((xmax - xmin) / BIN_WIDTH);
+  // ===== Override range personalizzato =====
+  if (USER_XMIN != -1.0) xmin = USER_XMIN;
+  if (USER_XMAX != -1.0) xmax = USER_XMAX;
+
+  // ===== Calcolo nbins basato su BIN_WIDTH se specificato =====
+  if (BIN_WIDTH > 0.0) {
+    nbins = TMath::Ceil((xmax - xmin) / BIN_WIDTH);
     if (nbins < 1) nbins = 1;
   }
 
-  TH1D *h = new TH1D("h", "R_{x};#Omega (ohm);Counts", nbins, xmin, xmax);
+  TH1D *h = new TH1D("h", "R_{n}^{0,corr,dir};#Omega (ohm);Counts", nbins, xmin, xmax);
   h->SetLineColor(TColor::GetColor("#bc51a1"));
   h->SetLineWidth(3);
   h->SetFillStyle(0);
 
   for (auto v : data) h->Fill(v);
 
-  Double_t entries   = h->GetEntries();
+  Double_t entries = h->GetEntries();
   Double_t underflow = h->GetBinContent(0);
-  Double_t overflow  = h->GetBinContent(h->GetNbinsX() + 1);
+  Double_t overflow = h->GetBinContent(h->GetNbinsX() + 1);
   Double_t sigma_percent = (mean != 0.0) ? (stddev / TMath::Abs(mean) * 100.0) : 0.0;
 
   // ===== 4) Canvas e disegno =====
@@ -132,16 +128,16 @@ void plotDataZoom() {
 
   h->Draw("HIST");
 
-  // Aggiorna il canvas
+  // Aggiorna il canvas per mostrare i disegni
   c->Update();
   c->Modified();
 
   // ===== Salvataggio =====
-  c->SaveAs("istoRx.png");
-  TFile fout("istoRx.root", "RECREATE");
+  c->SaveAs("istoRndir.png");
+  TFile fout("istoRndir.root", "RECREATE");
   h->Write();
   fout.Close();
-  std::cout << "Salvato istoRx.png e istoRx.root ("
+  std::cout << "Salvato istoRndir.png e istoRndir.root ("
             << IMG_WIDTH << "x" << IMG_HEIGHT << " px)." << std::endl;
 
   // ===== 5) Gestione Interattiva =====
@@ -154,7 +150,7 @@ void plotDataZoom() {
 #ifndef __CINT__
 int main(int argc, char **argv) {
   TApplication theApp("App", &argc, argv);
-  plotDataZoom();
+  plotDataZoomdir();
   theApp.Run();
   return 0;
 }
