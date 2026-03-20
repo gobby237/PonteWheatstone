@@ -22,8 +22,8 @@
 #include <TSystem.h>
 
 // ===== Costanti per range personalizzato asse X =====
-const Double_t USER_XMIN = 1920;
-const Double_t USER_XMAX = 1984;
+const Double_t USER_XMIN = 1948;
+const Double_t USER_XMAX = 1958;
 
 // ===== Costante per massimo asse Y =====
 const Double_t USER_YMAX = -1;
@@ -35,14 +35,14 @@ const Double_t BIN_WIDTH = -1.0;
 const Int_t IMG_WIDTH  = 500;
 const Int_t IMG_HEIGHT = 600;
 
-void plotDataZoomdir() {
+void plotDataZoomAllargato() {
   gSystem->Load("libstdc++");
 
   // ===== 1) Dati =====
   std::vector<Double_t> data = {
-    1953.0, 1952.3, 1953.0, 1947.7, 1950.8,
-    1951.7, 1947.7, 1944.7, 1951.6, 1952.5,
-    1947.1, 1940.8, 1950.1, 1948.9, 1953.0
+    1954.9, 1953.8, 1952.8, 1952.5, 1951.8,
+    1952.0, 1951.7, 1952.4, 1951.9, 1951.7,
+    1951.7, 1951.4, 1951.4, 1951.4, 1951.4
   };
 
   if (data.empty()) {
@@ -94,7 +94,7 @@ void plotDataZoomdir() {
     if (nbins < 1) nbins = 1;
   }
 
-  TH1D *h = new TH1D("h", "R_{n}^{0,corr,dir};#Omega (ohm);Counts", nbins, xmin, xmax);
+  TH1D *h = new TH1D("h", "R_{X};#Omega (ohm);Counts", nbins, xmin, xmax);
   h->SetLineColor(TColor::GetColor("#bc51a1"));
   h->SetLineWidth(3);
   h->SetFillStyle(0);
@@ -150,7 +150,7 @@ void plotDataZoomdir() {
 #ifndef __CINT__
 int main(int argc, char **argv) {
   TApplication theApp("App", &argc, argv);
-  plotDataZoomdir();
+  plotDataZoomAllargato();
   theApp.Run();
   return 0;
 }
